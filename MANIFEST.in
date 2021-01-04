@@ -1,0 +1,7 @@
+include db_factory/*.py
+include db_factory/.version
+include db_factory/LICENSE
+include db_factory/common/*.py
+include db_factory/cloud/*.py
+include db_factory/cloud/gcp/*.py
+include db_factory/cloud/aws/*.py
