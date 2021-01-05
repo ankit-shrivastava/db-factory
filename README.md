@@ -50,13 +50,17 @@ from db_factory.manager import DatabaseManager
 db = DatabaseManager(engine_type="sqlite", database="test_db", sqlite_db_path="/tmp")
 db.create_session()
 
-db.execute("create table test (id int PRIMARY KEY)")
-db.execute("insert into test values (1)")
-db.execute("insert into test values (2)")
+db.execute_sql(sql="create table test (id int PRIMARY KEY)")
+db.execute_sql(sql="insert into test values (1)")
+db.execute_sql(sql="insert into test values (2)")
 
-rows = db.execute("select * from test")
+rows = db.execute_sql(sql="select * from test")
 if rows:
   print(rows)
+
+
+df = db.get_df(sql="select * from test")
+print(df)
 ```
 
 ## Appendix

@@ -7,6 +7,7 @@ DML queries will automatically get commited as soon as query executed.
 
 import logging
 import traceback
+import pandas
 from pandas import DataFrame
 from sqlalchemy.orm import scoped_session
 
@@ -45,11 +46,12 @@ class Operations(object):
             f'Database operation is initialized for {self.session.bind.name}')
 
     def execute(self,
-                sql_query: str = None,
+                sql: str = None,
                 panda_df: DataFrame = None,
                 table_name: str = None,
-                chunk_size: int = 1,
-                exist_action: str = "append"):
+                chunk_size: int = None,
+                exist_action: str = "append",
+                get_df: bool = False):
         """
         Single function to execute DML or DDL queries. Support for Pandas
         DataFrame object to create, replace or append table with DataFrame
@@ -59,7 +61,7 @@ class Operations(object):
         Attributes:
         -----------
 
-            sql_query:      (Optional) => Plain DDL or DML query to execute on
+            sql:      (Optional) => Plain DDL or DML query to execute on
                             Database.
                             Default is None. One of paramater sql_query or
                             panda_df is required. If both is provided panda_df
@@ -79,35 +81,50 @@ class Operations(object):
                             Used in case of panda_df only.
                             Default: append mode. Others modes are replace
                             or fail.
+            get_df:         (Optional) => Execute the DML Select query and
+                            return Pandas DataFrame.
+                            Default: False to return rows. True will return
+                            Pandas Dataframe.
         *******
         Return:
         -------
 
-            rows:           If rows in case of DDL queries else none.
+            rows:           If rows / Pandas Dataframe in case of DDL queries
+                            else none.
         """
 
         rows = None
         try:
-            if panda_df:
-                logger.info(
-                    f'Got Panda DataFrame. This will be used to insert data in table.')
-                logger.info(
-                    f'Table name: {table_name} and action on table is already present: {exist_action}')
-                logger.info(f'Chunk size to insert data is: {chunk_size}')
+            if isinstance(panda_df, DataFrame):
+                if len(panda_df):
+                    logger.info(
+                        f'Got Pandas DataFrame. This will be used to insert data in table.')
+                    logger.info(
+                        f'Table name: {table_name} and action on table is already present: {exist_action}')
+                    logger.info(f'Chunk size to insert data is: {chunk_size}')
 
-                panda_df.to_sql(name=table_name,
-                                con=self.session.bind,
-                                if_exists=exist_action,
-                                chunksize=chunk_size)
-                self.session.commit()
-            elif sql_query:
-                logger.info(f'Got SQL query to execute. Query: {sql_query}')
-                result = self.session.execute(sql_query)
-
-                if result.returns_rows:
-                    rows = result.fetchall()
-                else:
+                    panda_df.to_sql(name=table_name,
+                                    con=self.session.bind,
+                                    if_exists=exist_action,
+                                    chunksize=chunk_size)
                     self.session.commit()
+                else:
+                    msg = f"Invalid DataFrame"
+                    logger.error(msg)
+                    raise ValueError(msg)
+            elif sql:
+                logger.info(f'Got SQL query to execute. Query: {sql}')
+                if get_df:
+                    rows = pandas.read_sql(sql=sql,
+                                           con=self.session.bind,
+                                           chunksize=chunk_size)
+                else:
+                    result = self.session.execute(sql)
+
+                    if result.returns_rows:
+                        rows = result.fetchall()
+                    else:
+                        self.session.commit()
             else:
                 msg = f"No DDL or DML quesries to execute"
                 logger.error(msg)
@@ -118,4 +135,6 @@ class Operations(object):
 
             # Propagate the exception
             raise
+        finally:
+            self.session.close()
         return rows

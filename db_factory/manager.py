@@ -283,39 +283,56 @@ class DatabaseManager(object):
             # Propagate the exception
             raise
 
-    def execute(self,
-                sql_query: str = None,
-                panda_df: DataFrame = None,
-                table_name: str = None,
-                chunk_size: int = 1,
-                exist_action: str = "append"):
+    def execute_sql(self, sql: str):
         """
-        Single function to execute DML or DDL queries. Support for Pandas
-        DataFrame object to create, replace or append table with DataFrame
-        table objects.
+        Function to execute DML or DDL queries and return if rows exist.
 
         ***********
         Attributes:
         -----------
 
-            sql_query:      (Optional) => Plain DDL or DML query to execute on
-                            Database.
-                            Default is None. One of paramater sql_query or
-                            panda_df is required. If both is provided panda_df
-                            will be taken as priority and sql_query is ignored.
-            panda_df:       (Optional) => Pandas DataFrame table object to
+            sql:        (Required) => Plain DDL or DML query to execute on
+                        Database.
+                        Default is None. One of paramater sql_query or
+                        panda_df is required. If both is provided panda_df
+                        will be taken as priority and sql_query is ignored.
+        *******
+        Return:
+        -------
+
+            rows:       If rows in case of DML select queries else none.
+        """
+
+        rows = None
+
+        db_operation = Operations(self.session)
+        rows = db_operation.execute(sql=sql)
+        return rows
+
+    def execute_df(self,
+                   panda_df: DataFrame,
+                   table_name: str,
+                   chunk_size: int = None,
+                   exist_action: str = "append"):
+        """
+        Function to execute Pandas DataFrame object to create, replace or
+        append table with DataFrame table objects.
+
+        ***********
+        Attributes:
+        -----------
+
+            panda_df:       (Required) => Pandas DataFrame table object to
                             update the table.
                             Default is None. One of paramater sql_query or
                             panda_df is required. If both is provided panda_df
                             will be taken as priority and sql_query is ignored.
-            table_name:     (Optional) => Name of table used in case of
-                            panda_df only.
+            table_name:     (Optional) => Name of table .
             chunk_size:     (Optional) => chunck size to update the table in
                             chunks for performance rather than insert row one
-                            by one. Used in case of panda_df only.
+                            by one.
                             Default: 1 row at a time.
             exist_action:   (Optional) => Action on if table already exist.
-                            Used in case of panda_df only.
                             Default: append mode. Others modes are replace
                             or fail.
         *******
@@ -328,9 +345,43 @@ class DatabaseManager(object):
         rows = None
 
         db_operation = Operations(self.session)
-        rows = db_operation.execute(sql_query=sql_query,
-                                    panda_df=panda_df,
+        rows = db_operation.execute(panda_df=panda_df,
                                     table_name=table_name,
                                     chunk_size=chunk_size,
                                     exist_action=exist_action)
+        return rows
+
+    def get_df(self,
+               sql: str,
+               chunk_size: int = None):
+        """
+        Function to execute DML select queries and return Pandas DataFrame
+        object.
+
+        ***********
+        Attributes:
+        -----------
+
+            sql:            (Required) => Plain DDL or DML query to execute on
+                            Database.
+                            Default is None. One of paramater sql_query or
+                            panda_df is required. If both is provided panda_df
+                            will be taken as priority and sql_query is ignored.
+            chunk_size:     (Optional) => If specified, return an iterator
+                            where chunk_size is the number of rows to include
+                            in each chunk.
+                            Default: None to include all records.
+        *******
+        Return:
+        -------
+
+            rows:           If rows in case of DDL queries else none.
+        """
+
+        rows = None
+
+        db_operation = Operations(self.session)
+        rows = db_operation.execute(sql=sql,
+                                    chunk_size=chunk_size,
+                                    get_df=True)
         return rows
