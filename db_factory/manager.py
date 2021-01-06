@@ -35,6 +35,19 @@ class DatabaseManager(object):
     --------
 
         __init__:               Initaization functions
+        fetch_from_secret:      Method to fetch the values from Cloud Secret
+                                Manager Service.
+        create_uri:             Method uses the initalization parameter and
+                                create the uri for the provided engine with
+                                proper driver.
+        create_session:         Method to create the SQLAlchemy session for the
+                                initalized the engine type.
+        execute_sql:            Function to execute DML or DDL queries and return
+                                with rows if rows exist.
+        execute_df:             Function to execute Pandas DataFrame object.
+        get_df:                 Function to execute DML select queries and return
+                                as Pandas DataFrame.
+        object
     """
 
     def __init__(self,
