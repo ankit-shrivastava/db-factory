@@ -37,8 +37,10 @@ VERSION_RE = re.compile(r'''__version__ = ['"]([0-9.]+)['"]''')
 
 base = [
     "sqlalchemy-utils",               # Various utility functions for SQLAlchemy
-    "pandas"                          # Powerful data structures for data analysis,
+    "pandas",                         # Powerful data structures for data analysis,
                                       # time series, and statistics
+    "numpy"                           # NumPy is the fundamental package for array
+                                      # computing with Python.
 ]
 
 aws = [
@@ -71,10 +73,7 @@ mysql = [
 
 setups = []
 
-ir_dict = {"setups": setups, "aws": aws, "gcp": gcp, "snowflake": snowflake,
-           "postgres": postgres, "mysql": mysql, "base": base}
-
-ir = (base, aws, gcp, snowflake, postgres, mysql)
+ir = (base + aws + gcp + snowflake + postgres + mysql)
 requires = ir
 
 

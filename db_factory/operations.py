@@ -106,7 +106,8 @@ class Operations(object):
                     panda_df.to_sql(name=table_name,
                                     con=self.session.bind,
                                     if_exists=exist_action,
-                                    chunksize=chunk_size)
+                                    chunksize=chunk_size,
+                                    index=False)
                     self.session.commit()
                 else:
                     msg = f"Invalid DataFrame"
